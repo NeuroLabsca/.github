@@ -14,6 +14,8 @@ export interface NightForecast {
   kp: number;
   /** Mean cloud cover during the dark hours, 0-100 percent. */
   cloudCoverPct: number;
+  /** How the verdict names this night: "tonight" (default), "tomorrow night", "Wednesday night". */
+  when?: string;
 }
 
 export type FactorId = "reach" | "cloud" | "darkness" | "moon";

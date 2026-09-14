@@ -144,7 +144,7 @@ export function scoreNight(loc: Location, f: NightForecast): NightScore {
   const capValue = caps.length ? Math.min(...caps.map((c) => c.cap)) : Infinity;
   const score = clamp(Math.round(Math.min(weightedSum, capValue)), 0, 100);
 
-  return { date: f.date, score, verdict: verdictFor(score, breakdown, caps), breakdown, weightedSum, caps };
+  return { date: f.date, score, verdict: verdictFor(score, breakdown, caps, f.when), breakdown, weightedSum, caps };
 }
 
 /** Tonight plus the next nights, in the order given. v1 passes exactly three. */

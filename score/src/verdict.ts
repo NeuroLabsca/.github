@@ -1,12 +1,12 @@
 import type { CapApplied, FactorResult } from "./types.ts";
 
 /** Score bands. Edges are inclusive at the bottom. */
-export const BANDS: Array<{ min: number; label: string; lead: string }> = [
-  { min: 80, label: "Go", lead: "Go out tonight." },
-  { min: 60, label: "Good", lead: "Good odds tonight." },
-  { min: 40, label: "Maybe", lead: "Worth a look if you are already up." },
-  { min: 20, label: "Unlikely", lead: "Unlikely tonight." },
-  { min: 0, label: "No", lead: "Not tonight." },
+export const BANDS: Array<{ min: number; label: string; lead: (when: string) => string }> = [
+  { min: 80, label: "Go", lead: (w) => `Go out ${w}.` },
+  { min: 60, label: "Good", lead: (w) => `Good odds ${w}.` },
+  { min: 40, label: "Maybe", lead: () => "Worth a look if you are already up." },
+  { min: 20, label: "Unlikely", lead: (w) => `Unlikely ${w}.` },
+  { min: 0, label: "No", lead: (w) => `Not ${w}.` },
 ];
 
 export function bandFor(score: number): (typeof BANDS)[number] {
@@ -24,8 +24,8 @@ const DRAG: Record<FactorResult["id"], string> = {
  * One line: band lead, then the single biggest thing holding the score back.
  * Caps win over drags because a cap is the whole story.
  */
-export function verdictFor(score: number, breakdown: FactorResult[], caps: CapApplied[]): string {
-  const lead = bandFor(score).lead;
+export function verdictFor(score: number, breakdown: FactorResult[], caps: CapApplied[], when = "tonight"): string {
+  const lead = bandFor(score).lead(when);
   if (caps.length) {
     const worst = caps.reduce((a, b) => (b.cap < a.cap ? b : a));
     return `${lead} ${DRAG[worst.id]}`;

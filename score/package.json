@@ -10,9 +10,11 @@
   "scripts": {
     "test": "node --experimental-strip-types --no-warnings --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json",
+    "build:site": "esbuild src/index.ts --bundle --format=iife --global-name=AuroraScore --minify --outfile=site/score.js",
     "demo": "node --experimental-strip-types --no-warnings src/demo.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.20.2"
+    "@types/node": "^22.20.2",
+    "esbuild": "^0.28.2"
   }
 }

@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aurora Tonight</title>
+<meta name="description" content="A 0-100 aurora score for your location, tonight and the next two nights, with the full breakdown behind the number.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #0c1120;
+    --surface: #141b30;
+    --surface-2: #1b2340;
+    --line: #2a3352;
+    --text: #e9ebf3;
+    --muted: #97a0bb;
+    --accent: #8fd8b0;
+    --accent-ink: #0c1120;
+    --pink: #e79bcd;
+    --good: #8fd8b0;
+    --warn: #e8bd77;
+    --bad: #e77f7f;
+    --ring-track: #232c48;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f2f3f8;
+      --surface: #ffffff;
+      --surface-2: #eceef6;
+      --line: #d7dbe8;
+      --text: #141a2c;
+      --muted: #5f6880;
+      --accent: #1f8a5b;
+      --accent-ink: #ffffff;
+      --pink: #b5468f;
+      --good: #1f8a5b;
+      --warn: #a56d0c;
+      --bad: #b83b3b;
+      --ring-track: #dfe3ee;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f3f8; --surface: #ffffff; --surface-2: #eceef6; --line: #d7dbe8;
+    --text: #141a2c; --muted: #5f6880; --accent: #1f8a5b; --accent-ink: #ffffff;
+    --pink: #b5468f; --good: #1f8a5b; --warn: #a56d0c; --bad: #b83b3b; --ring-track: #dfe3ee;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    padding-inline: 20px;
+    padding-block: env(safe-area-inset-top, 0px) calc(48px + env(safe-area-inset-bottom, 0px));
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 28px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; padding-block: 28px 0; }
+  h1 { font-family: "Bricolage Grotesque", "IBM Plex Sans", sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -0.01em; margin: 0; }
+  h1 span { color: var(--accent); }
+  .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .loc { display: grid; gap: 10px; }
+  .loc-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .loc-row input { flex: 1 1 220px; min-width: 0; }
+  input[type="text"] {
+    font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  input[type="text"]:focus-visible, button:focus-visible, input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button {
+    font: inherit; font-weight: 500; cursor: pointer; border-radius: 8px; padding: 10px 14px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:disabled { opacity: 0.55; cursor: default; }
+  .results { display: flex; flex-wrap: wrap; gap: 6px; }
+  .results button { padding: 6px 10px; font-size: 14px; }
+  .where { color: var(--muted); font-size: 14px; }
+  .where strong { color: var(--text); font-weight: 600; }
+
+  .nights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 560px) { .nights { grid-template-columns: 1fr; } }
+  .night {
+    text-align: left; display: grid; gap: 6px; padding: 16px; border-radius: 12px;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .night[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .night .when { font-size: 13px; color: var(--muted); }
+  .night .when b { color: var(--text); font-weight: 600; }
+  .score-row { display: flex; align-items: center; gap: 12px; }
+  .ring { width: 64px; height: 64px; flex: none; }
+  .ring circle { fill: none; stroke-width: 6; }
+  .ring .track { stroke: var(--ring-track); }
+  .ring .arc { stroke: var(--band); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 500ms ease; }
+  .big { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big small { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--band); color: var(--accent-ink); justify-self: start; }
+  .verdict { font-size: 15px; line-height: 1.35; }
+  .night[data-band="Go"], .night[data-band="Good"] { --band: var(--good); }
+  .night[data-band="Maybe"] { --band: var(--warn); }
+  .night[data-band="Unlikely"], .night[data-band="No"] { --band: var(--muted); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+  .panel h2 { font-family: "Bricolage Grotesque", sans-serif; font-size: 18px; font-weight: 600; margin: 0; }
+  .panel h2 span { color: var(--muted); font-weight: 400; }
+  .breakdown { display: grid; gap: 12px; }
+  .row { display: grid; grid-template-columns: 110px 1fr 84px; gap: 10px 14px; align-items: start; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr 84px; } .row .label { grid-column: 1 / -1; } }
+  .label { font-weight: 600; }
+  .label small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--ring-track); overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+  .note { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .math { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .math b { color: var(--text); font-weight: 500; display: block; font-size: 15px; }
+  .total { border-top: 1px solid var(--line); padding-top: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; }
+  .total .math { text-align: right; }
+  .cap { border-left: 3px solid var(--pink); padding: 8px 12px; background: var(--surface-2); border-radius: 0 8px 8px 0; font-size: 14px; }
+  .cap b { color: var(--pink); }
+
+  .alert { display: grid; gap: 12px; }
+  .alert-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  input[type="range"] { flex: 1 1 200px; accent-color: var(--accent); }
+  .thr { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 24px; min-width: 2.2ch; font-variant-numeric: tabular-nums; }
+  .hint { font-size: 13px; color: var(--muted); }
+  .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--accent); color: var(--accent-ink); padding: 12px 16px; border-radius: 10px; font-weight: 500; max-width: calc(100% - 32px); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+  .status { font-size: 14px; color: var(--muted); }
+  .status.err { color: var(--bad); }
+  footer { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  footer a { color: inherit; }
+  @media (prefers-reduced-motion: reduce) { .ring .arc { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Aurora <span>Tonight</span></h1>
+    <div class="tag">0 to 100, with the math</div>
+  </header>
+
+  <section class="loc" aria-label="Location">
+    <div class="loc-row">
+      <input type="text" id="q" placeholder="Town or city" autocomplete="off" aria-label="Search for a place">
+      <button id="search">Search</button>
+      <button id="geo" class="primary">Use my location</button>
+    </div>
+    <div class="results" id="results" hidden></div>
+    <div class="where" id="where">Pick a location to start.</div>
+    <div class="status" id="status" hidden></div>
+  </section>
+
+  <section class="nights" id="nights" aria-label="Scores"></section>
+
+  <section class="panel" id="panel" hidden>
+    <h2 id="panel-title">Breakdown</h2>
+    <div class="breakdown" id="breakdown"></div>
+    <div id="caps"></div>
+    <div class="total" id="total"></div>
+  </section>
+
+  <section class="panel alert" aria-label="Alerts">
+    <h2>Alert me above <span id="thr-label">60</span></h2>
+    <div class="alert-row">
+      <input type="range" id="thr" min="1" max="100" value="60" aria-label="Alert threshold">
+      <div class="thr" id="thr-num">60</div>
+      <button id="alert-btn">Turn on browser alerts</button>
+    </div>
+    <div class="hint" id="alert-hint">Fires once per night when tonight's score crosses your threshold. Browser notifications work while this page is open; it re-checks every 30 minutes.</div>
+  </section>
+
+  <footer>
+    Kp forecast from NOAA SWPC, cloud cover from Open-Meteo, darkness and moon computed for your spot. Night window is 6 pm to 6 am local. Weights: storm reach 40%, cloud 30%, dark hours 15%, moon 15%. Overcast, no darkness, or a storm that can't reach you caps the score, and the cap is shown.
+  </footer>
+</div>
+
+<script src="score.js"></script>
+<script>
+(() => {
+  const { scoreNights, decideAlert, bandFor } = AuroraScore;
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    q: $("q"), search: $("search"), geo: $("geo"), results: $("results"), where: $("where"), status: $("status"),
+    nights: $("nights"), panel: $("panel"), panelTitle: $("panel-title"), breakdown: $("breakdown"), caps: $("caps"), total: $("total"),
+    thr: $("thr"), thrNum: $("thr-num"), thrLabel: $("thr-label"), alertBtn: $("alert-btn"), alertHint: $("alert-hint"),
+  };
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+
+  let loc = store.get("loc", null);
+  let nights = [];
+  let selected = 0;
+  let threshold = store.get("threshold", 60);
+  let alertsOn = store.get("alertsOn", false);
+  let alertState = store.get("alertState", { lastScore: null, lastAlertedDate: null });
+
+  const setStatus = (msg, err = false) => { els.status.hidden = !msg; els.status.textContent = msg || ""; els.status.classList.toggle("err", err); };
+  const pad = (n) => String(n).padStart(2, "0");
+  const isoDate = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+  const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return isoDate(d); };
+  const weekday = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString(undefined, { weekday: "long", timeZone: "UTC" });
+  const shortDate = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+
+  async function fetchJSON(url) {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`${r.status} from ${new URL(url).host}`);
+    return r.json();
+  }
+
+  /** Three nights of Kp and cloud for a location. Night window: 18:00 to 06:00 local. */
+  async function loadForecast(lat, lon) {
+    const [kp, om] = await Promise.all([
+      fetchJSON("https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"),
+      fetchJSON(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=cloud_cover&timezone=auto&forecast_days=5`),
+    ]);
+    const offset = om.utc_offset_seconds;
+    const nowLocal = new Date(Date.now() + offset * 1000);
+    let first = isoDate(nowLocal);
+    if (nowLocal.getUTCHours() < 6) first = addDays(first, -1); // the night still in progress
+    const cloudByHour = new Map(om.hourly.time.map((t, i) => [t, om.hourly.cloud_cover[i]]));
+    const out = [];
+    for (let n = 0; n < 3; n++) {
+      const date = addDays(first, n);
+      const next = addDays(date, 1);
+      const startUtc = Date.parse(`${date}T18:00:00Z`) - offset * 1000;
+      const endUtc = Date.parse(`${next}T06:00:00Z`) - offset * 1000;
+      let kpMax = null;
+      for (const row of kp) {
+        const t = Date.parse(`${row.time_tag}Z`);
+        if (t + 3 * 3600e3 > startUtc && t < endUtc) kpMax = Math.max(kpMax ?? 0, Number(row.kp));
+      }
+      const hours = [];
+      for (let h = 18; h < 24; h++) hours.push(`${date}T${pad(h)}:00`);
+      for (let h = 0; h < 6; h++) hours.push(`${next}T${pad(h)}:00`);
+      const clouds = hours.map((h) => cloudByHour.get(h)).filter((v) => typeof v === "number");
+      const cloud = clouds.length ? clouds.reduce((a, b) => a + b, 0) / clouds.length : null;
+      out.push({ date, kp: kpMax, cloudCoverPct: cloud, when: n === 0 ? "tonight" : n === 1 ? "tomorrow night" : `${weekday(date)} night` });
+    }
+    return out;
+  }
+
+  function ring(score, band) {
+    const r = 26, c = 2 * Math.PI * r;
+    return `<svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="${r}"/><circle class="arc" cx="32" cy="32" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - score / 100)).toFixed(1)}"/></svg>`;
+  }
+
+  function renderNights() {
+    els.nights.innerHTML = nights.map((n, i) => {
+      const band = bandFor(n.score).label;
+      const whenLabel = i === 0 ? "Tonight" : i === 1 ? "Tomorrow" : weekday(n.date);
+      return `<button class="night" data-band="${band}" aria-pressed="${i === selected}" data-i="${i}">
+        <div class="when"><b>${whenLabel}</b> · ${shortDate(n.date)}</div>
+        <div class="score-row">${ring(n.score, band)}<div class="big">${n.score}<small>/100</small></div></div>
+        <span class="pill">${band}</span>
+        <div class="verdict">${n.verdict}</div>
+      </button>`;
+    }).join("");
+    els.nights.querySelectorAll(".night").forEach((b) => b.addEventListener("click", () => { selected = Number(b.dataset.i); renderNights(); renderPanel(); }));
+  }
+
+  function renderPanel() {
+    const n = nights[selected];
+    if (!n) { els.panel.hidden = true; return; }
+    els.panel.hidden = false;
+    const whenLabel = selected === 0 ? "tonight" : selected === 1 ? "tomorrow night" : `${weekday(n.date)} night`;
+    els.panelTitle.innerHTML = `Why ${n.score} ${whenLabel} <span>· ${shortDate(n.date)}</span>`;
+    els.breakdown.innerHTML = n.breakdown.map((r) => `
+      <div class="row">
+        <div class="label">${r.label}<small>${r.input}</small></div>
+        <div><div class="bar"><i style="width:${r.score}%"></i></div><div class="note">${r.note}</div></div>
+        <div class="math">${r.score} × ${r.weight.toFixed(2)}<b>${r.points.toFixed(1)} pts</b></div>
+      </div>`).join("");
+    els.caps.innerHTML = n.caps.map((c) => `<div class="cap"><b>Capped at ${c.cap}.</b> ${c.reason}</div>`).join("");
+    const capped = n.caps.length ? ` · capped at ${Math.min(...n.caps.map((c) => c.cap))}` : "";
+    els.total.innerHTML = `<div>Weighted sum${capped}</div><div class="math"><b>${n.weightedSum.toFixed(1)}${n.caps.length ? ` → ${n.score}` : ""}</b></div>`;
+  }
+
+  async function run() {
+    if (!loc) return;
+    els.where.innerHTML = `Scoring for <strong>${loc.name}</strong>`;
+    setStatus("Loading forecast…");
+    try {
+      const fc = await loadForecast(loc.lat, loc.lon);
+      const missing = fc.find((f) => f.kp === null || f.cloudCoverPct === null);
+      if (missing) throw new Error(`No forecast data for ${missing.date}.`);
+      nights = scoreNights({ lat: loc.lat, lon: loc.lon }, fc);
+      setStatus(`Updated ${new Date().toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}.`);
+      renderNights(); renderPanel(); checkAlert();
+    } catch (e) {
+      setStatus(`Could not load the forecast: ${e.message}. Try again in a minute.`, true);
+    }
+  }
+
+  function setLocation(next) { loc = next; store.set("loc", loc); els.results.hidden = true; els.results.innerHTML = ""; selected = 0; run(); }
+
+  async function search() {
+    const q = els.q.value.trim();
+    if (!q) return;
+    els.search.disabled = true;
+    try {
+      const r = await fetchJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=en&format=json`);
+      const hits = r.results || [];
+      if (!hits.length) { setStatus(`Nothing found for "${q}".`, true); return; }
+      els.results.hidden = false;
+      els.results.innerHTML = hits.map((h, i) => `<button data-i="${i}">${h.name}${h.admin1 ? ", " + h.admin1 : ""}, ${h.country_code}</button>`).join("");
+      els.results.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+        const h = hits[Number(b.dataset.i)];
+        setLocation({ lat: h.latitude, lon: h.longitude, name: `${h.name}${h.admin1 ? ", " + h.admin1 : ""}` });
+      }));
+    } catch (e) { setStatus(`Search failed: ${e.message}`, true); }
+    finally { els.search.disabled = false; }
+  }
+
+  function geolocate() {
+    if (!navigator.geolocation) { setStatus("Your browser does not offer location. Search instead.", true); return; }
+    els.geo.disabled = true; setStatus("Asking for your location…");
+    navigator.geolocation.getCurrentPosition(
+      (p) => { els.geo.disabled = false; const { latitude: lat, longitude: lon } = p.coords; setLocation({ lat, lon, name: `your location (${lat.toFixed(2)}, ${lon.toFixed(2)})` }); },
+      () => { els.geo.disabled = false; setStatus("Location was blocked. Search for your town instead.", true); },
+      { timeout: 10000, maximumAge: 600000 }
+    );
+  }
+
+  function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 6000); }
+
+  function checkAlert() {
+    if (!nights.length) return;
+    const t = nights[0];
+    const d = decideAlert(alertState, t.date, t.score, threshold);
+    alertState = d.next; store.set("alertState", alertState);
+    if (!d.send || !alertsOn) return;
+    const msg = `Aurora score ${t.score} tonight at ${loc.name}. ${t.verdict}`;
+    toast(msg);
+    if ("Notification" in window && Notification.permission === "granted") new Notification("Aurora Tonight", { body: msg });
+  }
+
+  function renderAlertUI() {
+    els.thr.value = threshold; els.thrNum.textContent = threshold; els.thrLabel.textContent = threshold;
+    const perm = "Notification" in window ? Notification.permission : "unsupported";
+    if (perm === "denied") { els.alertBtn.textContent = "Notifications blocked"; els.alertBtn.disabled = true; alertsOn = false; }
+    else { els.alertBtn.textContent = alertsOn ? "Browser alerts on" : "Turn on browser alerts"; els.alertBtn.disabled = false; }
+    els.alertBtn.setAttribute("aria-pressed", String(alertsOn));
+  }
+
+  els.thr.addEventListener("input", () => { threshold = Number(els.thr.value); store.set("threshold", threshold); renderAlertUI(); });
+  els.thr.addEventListener("change", checkAlert);
+  els.alertBtn.addEventListener("click", async () => {
+    if (alertsOn) { alertsOn = false; }
+    else {
+      if ("Notification" in window && Notification.permission === "default") await Notification.requestPermission();
+      alertsOn = !("Notification" in window) || Notification.permission === "granted";
+      if (!alertsOn) setStatus("Notifications were not allowed. Alerts stay off.", true);
+    }
+    store.set("alertsOn", alertsOn); renderAlertUI(); checkAlert();
+  });
+  els.search.addEventListener("click", search);
+  els.q.addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+  els.geo.addEventListener("click", geolocate);
+
+  renderAlertUI();
+  if (loc) run();
+  setInterval(run, 30 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && loc) run(); });
+})();
+</script>
+</body>
+</html>

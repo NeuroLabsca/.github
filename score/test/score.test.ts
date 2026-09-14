@@ -100,6 +100,11 @@ test("scoreNights returns one result per night in order", () => {
   assert.ok(out[0].score > out[1].score && out[1].score > out[2].score);
 });
 
+test("verdict names the night it is about", () => {
+  const n = scoreNight(PEI, { date: "2026-09-11", kp: 7, cloudCoverPct: 5, when: "tomorrow night" });
+  assert.match(n.verdict, /^Go out tomorrow night\./);
+});
+
 test("rejects bad input", () => {
   assert.throws(() => scoreNight(PEI, { date: "2026-09-14", kp: 10, cloudCoverPct: 0 }));
   assert.throws(() => scoreNight(PEI, { date: "2026-09-14", kp: 3, cloudCoverPct: 120 }));
