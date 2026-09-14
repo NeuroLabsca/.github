@@ -1,0 +1,18 @@
+{
+  "name": "@neurolabs/aurora-score",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Weighted 0-100 aurora viewing score with a full breakdown. Tonight plus the next two nights.",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --no-warnings --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "demo": "node --experimental-strip-types --no-warnings src/demo.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2"
+  }
+}
