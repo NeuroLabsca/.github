@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apply · Smallbatch</title>
+<meta name="description" content="Apply for Smallbatch Cohort 03, a ten-week cohort for AI entrepreneurs. Twelve seats, applications close 28 Sep 2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+<nav class="nav" aria-label="Main">
+  <a class="brand" href="index.html">Smallbatch</a>
+  <ul>
+    <li><a href="program.html">Program</a></li>
+    <li><a href="apply.html" aria-current="page">Apply</a></li>
+    <li><a class="pill" href="index.html#next"><span class="dot" aria-hidden="true"></span>Cohort 03 · 7 seats open</a></li>
+  </ul>
+</nav>
+
+<section class="hero" style="grid-template-columns:1fr">
+  <div>
+    <p class="label">Apply · Cohort 03 · closes Mon 28 Sep 2026</p>
+    <h1 style="margin-top:0.75rem;font-size:var(--t-xl)">About ten minutes. No deposit.</h1>
+    <p class="lede">We read every application and reply within five days, accepted or not, with a reason. Short, specific answers beat long ones.</p>
+  </div>
+</section>
+
+<section class="block">
+  <p class="label">Application</p>
+  <form class="form" name="apply" method="POST" action="/thanks.html" data-netlify="true" netlify-honeypot="bot-field">
+    <input type="hidden" name="form-name" value="apply">
+    <input type="hidden" name="cohort" value="03">
+    <p class="hidden" aria-hidden="true"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+
+    <div class="field">
+      <label for="name">Name</label>
+      <input id="name" name="name" type="text" required autocomplete="name">
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label for="link">A link</label>
+      <span class="hint">Your product, a repo, a demo video, or the closest thing you have. One link.</span>
+      <input id="link" name="link" type="url" placeholder="https://">
+    </div>
+
+    <div class="field">
+      <label for="building">What are you building?</label>
+      <span class="hint">Who has the problem, what the model does in it, and what exists today. Three to five sentences.</span>
+      <textarea id="building" name="building" required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="stage">Where is it right now?</label>
+      <select id="stage" name="stage" required>
+        <option value="">Choose one</option>
+        <option value="idea">An idea and some conversations</option>
+        <option value="prototype">A prototype I can show</option>
+        <option value="users">Real users, no revenue</option>
+        <option value="revenue">Paying users</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="week9">What would you need to have live by week 9 to call this worth it?</label>
+      <span class="hint">Be concrete. "Ten paying customers" or "the eval score above 80" is better than "traction".</span>
+      <textarea id="week9" name="week9" required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="why">Why a cohort and not a community?</label>
+      <span class="hint">If you've been in a Skool, Circle or Discord group before, what happened?</span>
+      <textarea id="why" name="why"></textarea>
+    </div>
+
+    <fieldset class="field" style="border:0;padding:0;margin:0">
+      <legend style="font-weight:600;font-size:var(--t-sm);padding:0;margin-bottom:.4rem">Can you make Tuesday and Thursday, 12:00–13:30 Eastern, every week from 5 Oct to 11 Dec?</legend>
+      <div class="choices">
+        <label><input type="radio" name="attendance" value="yes" required> Yes, both, every week</label>
+        <label><input type="radio" name="attendance" value="mostly" required> I'd miss one or two, and I'll say which below</label>
+        <label><input type="radio" name="attendance" value="no" required> No, but I'd want to know about a different time slot</label>
+      </div>
+    </fieldset>
+
+    <div class="field">
+      <label for="timezone">Your timezone</label>
+      <input id="timezone" name="timezone" type="text" placeholder="e.g. Atlantic, Pacific, CET" required>
+    </div>
+
+    <div class="field">
+      <label for="notes">Anything else</label>
+      <span class="hint">Missed-week dates, a request for one of the two $600 seats, or a question. Optional.</span>
+      <textarea id="notes" name="notes"></textarea>
+    </div>
+
+    <div>
+      <button class="btn" type="submit">Send application</button>
+      <p class="note" style="margin-top:.75rem">You'll get a reply from the Cohort 03 facilitator within five days. Payment is only requested after acceptance.</p>
+    </div>
+  </form>
+</section>
+
+<footer class="foot">
+  <div>Smallbatch · Charlottetown, PEI · A <a href="https://neurolabs.ca">NeuroLabs</a> program</div>
+  <ul>
+    <li><a href="program.html">Program</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="https://neurolabs.ca/contact/">Contact</a></li>
+  </ul>
+</footer>
+
+</div>
+</body>
+</html>

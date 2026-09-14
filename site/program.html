@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program · Smallbatch</title>
+<meta name="description" content="The ten-week Smallbatch program for AI entrepreneurs, week by week, with what you ship each week.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+<nav class="nav" aria-label="Main">
+  <a class="brand" href="index.html">Smallbatch</a>
+  <ul>
+    <li><a href="program.html" aria-current="page">Program</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a class="pill" href="index.html#next"><span class="dot" aria-hidden="true"></span>Cohort 03 · 7 seats open</a></li>
+  </ul>
+</nav>
+
+<section class="hero" style="grid-template-columns:1fr">
+  <div>
+    <p class="label">Program · Cohort 03 · 5 Oct – 11 Dec 2026</p>
+    <h1 style="margin-top:0.75rem;font-size:var(--t-xl)">Ten weeks, week by week.</h1>
+    <p class="lede">Tuesdays are a topic applied to your product on the call. Thursdays are reviews of what shipped. Each week ends with something that exists and didn't the week before.</p>
+  </div>
+</section>
+
+<section class="block">
+  <p class="label">Weeks 1–4<br>Find the thing</p>
+  <div>
+    <article class="week">
+      <div class="n"><b>01</b>5–9 Oct</div>
+      <div>
+        <h3>Pick a problem that pays</h3>
+        <p>Most AI products start from a capability ("it can summarize") instead of a problem someone already pays to solve. This week you write the problem down in one paragraph, name who has it, and talk to five of them before Thursday. If you can't find five, that is the finding.</p>
+        <p class="ship">Problem statement, five conversations, and what each person does about it today.</p>
+      </div>
+    </article>
+    <article class="week">
+      <div class="n"><b>02</b>12–16 Oct</div>
+      <div>
+        <h3>The thin slice</h3>
+        <p>One input, one output, one user, end to end. No auth, no billing, no settings page. The slice should be embarrassing and working. We look at where the model actually sits in the flow, and how much of the value is the model versus the plumbing around it.</p>
+        <p class="ship">A URL where one real input produces one useful output.</p>
+      </div>
+    </article>
+    <article class="week">
+      <div class="n"><b>03</b>19–23 Oct</div>
+      <div>
+        <h3>Evals before prompts</h3>
+        <p>You can't improve a prompt you can't score. Write twenty test cases from your week 1 conversations, decide what "good" means for each, and build the smallest script that runs them and prints a number. Then, and only then, tune the prompt or swap the model.</p>
+        <p class="ship">Twenty cases, a scoring script, a baseline number, and one change that moved it.</p>
+      </div>
+    </article>
+    <article class="week">
+      <div class="n"><b>04</b>26–30 Oct</div>
+      <div>
+        <h3>Why the wrapper isn't the product</h3>
+        <p>If your product is a text box in front of an API, the API vendor ships your feature next quarter. This week is about the part that isn't the model: your data, your workflow, your integration, your distribution, your taste. You name it and start building it.</p>
+        <p class="ship">A written answer to "what do you have that the model vendor doesn't", and the first piece of it in the product.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="block">
+  <p class="label">Weeks 5–8<br>Make it real</p>
+  <div>
+    <article class="week">
+      <div class="n"><b>05</b>2–6 Nov</div>
+      <div>
+        <h3>First ten users</h3>
+        <p>Ten people who are not your friends, using the thin slice on their own problem. You watch at least three of them do it. The Thursday review is the recordings, not the product.</p>
+        <p class="ship">Ten users, three session notes, and the top three things that broke.</p>
+      </div>
+    </article>
+    <article class="week">
+      <div class="n"><b>06</b>9–13 Nov</div>
+      <div>
+        <h3>Token cost and pricing</h3>
+        <p>Work out what one user costs you per month at real usage, including the retries and the long-context calls you forgot. Then pick a price with a margin that survives a 3x usage surprise. Per-seat, per-run, or per-outcome, with the tradeoffs of each.</p>
+        <p class="ship">A cost-per-user figure, a price, and the margin at 1x and 3x usage.</p>
+      </div>
+    </article>
+    <article class="week">
+      <div class="n"><b>07</b>16–20 Nov</div>
+      <div>
+        <h3>Reliability</h3>
+        <p>Timeouts, rate limits, a vendor outage, a model that returns the wrong shape, a user who pastes something you didn't expect. Take the worst output your evals have produced and put a guardrail in front of it. Add a fallback model and a way to tell when it's being used.</p>
+        <p class="ship">A fallback path, a timeout budget, and one guardrail with a test that proves it fires.</p>
+      </div>
+    </article>
+    <article class="week">
+      <div class="n"><b>08</b>23–27 Nov</div>
+      <div>
+        <h3>Distribution</h3>
+        <p>Pick one channel and test it with something that costs you: money, or fifty real outreach messages, or a piece of content that took a day. Measure replies, not impressions. The point is to know one channel that works before you launch into all of them.</p>
+        <p class="ship">One channel, the spend, the result, and whether you'd do it again.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="block">
+  <p class="label">Weeks 9–10<br>Ship it</p>
+  <div>
+    <article class="week">
+      <div class="n"><b>09</b>30 Nov – 4 Dec</div>
+      <div>
+        <h3>Launch</h3>
+        <p>Public, with a price on the page and a way to pay. Not a waitlist. The launch goes out Tuesday so Thursday's review is about what actually happened, and you have a week to fix it.</p>
+        <p class="ship">A live product with a price and at least one attempt at a payment, successful or not.</p>
+      </div>
+    </article>
+    <article class="week">
+      <div class="n"><b>10</b>7–11 Dec</div>
+      <div>
+        <h3>Demo day and what's next</h3>
+        <p>Ten minutes each, on the Thursday. What you set out to do, what you shipped, what the numbers say, and your honest read on whether to keep going. Then a 90-day plan, including the option to stop. The facilitator presents too and is held to the same standard.</p>
+        <p class="ship">A ten-minute demo and a written 90-day plan.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="block">
+  <p class="label">Next step</p>
+  <div>
+    <h2>Seven seats left for Cohort 03.</h2>
+    <p class="intro">Applications close Mon 28 Sep 2026.</p>
+    <a class="btn" href="apply.html">Apply for Cohort 03</a>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>Smallbatch · Charlottetown, PEI · A <a href="https://neurolabs.ca">NeuroLabs</a> program</div>
+  <ul>
+    <li><a href="program.html">Program</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="https://neurolabs.ca/contact/">Contact</a></li>
+  </ul>
+</footer>
+
+</div>
+</body>
+</html>
