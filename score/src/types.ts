@@ -26,11 +26,13 @@ export interface FactorResult {
   label: string;
   /** The raw input as a human would read it, e.g. "Kp 5 (need Kp 4 on the horizon here)". */
   input: string;
-  /** Factor score, 0-100. */
+  /** "gate" multiplies the sky score; "sky" factors are weighted and summed. */
+  role: "gate" | "sky";
+  /** Factor score, 0-100. For the gate, this is the multiplier × 100. */
   score: number;
-  /** Weight, 0-1. All weights sum to 1. */
+  /** Weight within the sky score, 0-1. Sky weights sum to 1. The gate has weight 0. */
   weight: number;
-  /** score * weight, rounded to one decimal. These sum to the pre-cap total. */
+  /** score * weight for sky factors, rounded to one decimal. These sum to `sky`. The gate has 0. */
   points: number;
   /** Plain-English note on why this factor scored what it did. */
   note: string;
@@ -50,7 +52,11 @@ export interface NightScore {
   /** One line, plain English. */
   verdict: string;
   breakdown: FactorResult[];
-  /** Weighted sum before caps, one decimal. Equals `score` when no cap applied. */
-  weightedSum: number;
+  /** Weighted sky score, 0-100, one decimal. */
+  sky: number;
+  /** Storm reach multiplier, 0-1, two decimals. */
+  reach: number;
+  /** sky × reach before caps, one decimal. Equals `score` when no cap applied. */
+  raw: number;
   caps: CapApplied[];
 }

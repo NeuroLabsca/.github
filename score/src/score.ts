@@ -1,10 +1,11 @@
 import { darkHours, magneticLatitude, moonIllumination } from "./astro.ts";
-import { CAPS, HORIZON_MARGIN_DEG, OVERHEAD_MAGLAT_BY_KP, WEIGHTS } from "./factors.ts";
+import { CAPS, HORIZON_MARGIN_DEG, OVERHEAD_MAGLAT_BY_KP, REACH_RAMP_KP, SKY_WEIGHTS } from "./factors.ts";
 import type { CapApplied, FactorResult, Location, NightForecast, NightScore } from "./types.ts";
 import { verdictFor } from "./verdict.ts";
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const round1 = (x: number) => Math.round(x * 10) / 10;
+const round2 = (x: number) => Math.round(x * 100) / 100;
 
 /** Kp at which the oval edge sits over a given magnetic latitude. Linear between table rows. */
 export function kpForOverhead(magLat: number): number {
@@ -19,27 +20,28 @@ export function kpForOverhead(magLat: number): number {
   return 9;
 }
 
-/** Storm reach: does the forecast Kp get the oval close enough to see from here? */
+/**
+ * Storm reach: the gate. 0 when the forecast Kp is REACH_RAMP_KP or more below
+ * what a horizon view here needs, 50 at the horizon Kp, 100 at the overhead Kp.
+ */
 export function reachFactor(loc: Location, kp: number): FactorResult {
   const magLat = magneticLatitude(loc.lat, loc.lon);
   const absMag = Math.abs(magLat);
   const overheadKp = kpForOverhead(absMag);
-  // Horizon view starts when the oval edge is HORIZON_MARGIN_DEG poleward of you.
   const horizonKp = kpForOverhead(absMag + HORIZON_MARGIN_DEG);
-  // 0 at one Kp below horizon threshold, 60 at horizon, 100 at overhead.
   let score: number;
-  if (kp <= horizonKp - 1) score = 0;
-  else if (kp < horizonKp) score = 60 * (kp - (horizonKp - 1));
-  else if (kp < overheadKp) score = 60 + (40 * (kp - horizonKp)) / Math.max(overheadKp - horizonKp, 0.01);
+  if (kp <= horizonKp - REACH_RAMP_KP) score = 0;
+  else if (kp < horizonKp) score = (50 * (kp - (horizonKp - REACH_RAMP_KP))) / REACH_RAMP_KP;
+  else if (kp < overheadKp) score = 50 + (50 * (kp - horizonKp)) / Math.max(overheadKp - horizonKp, 0.01);
   else score = 100;
   score = clamp(Math.round(score), 0, 100);
 
   const fmt = (x: number) => x.toFixed(1);
   const note =
     score === 0
-      ? `Forecast Kp ${kp} is too weak to reach magnetic latitude ${fmt(absMag)}. You need about Kp ${fmt(horizonKp)} for a horizon glow.`
-      : score < 60
-        ? `Kp ${kp} is just under the Kp ${fmt(horizonKp)} needed for a horizon view here. Marginal.`
+      ? `Kp ${kp} is too weak to reach magnetic latitude ${fmt(absMag)}. A horizon glow here needs about Kp ${fmt(horizonKp)}.`
+      : score < 50
+        ? `Kp ${kp} is just under the Kp ${fmt(horizonKp)} a horizon view needs here. Marginal at best.`
         : score < 100
           ? `Kp ${kp} clears the Kp ${fmt(horizonKp)} horizon threshold. Overhead needs about Kp ${fmt(overheadKp)}.`
           : `Kp ${kp} puts the oval overhead at magnetic latitude ${fmt(absMag)}.`;
@@ -47,9 +49,10 @@ export function reachFactor(loc: Location, kp: number): FactorResult {
     id: "reach",
     label: "Storm reach",
     input: `Kp ${kp}, magnetic latitude ${fmt(absMag)}`,
+    role: "gate",
     score,
-    weight: WEIGHTS.reach,
-    points: round1(score * WEIGHTS.reach),
+    weight: 0,
+    points: 0,
     note,
   };
 }
@@ -69,9 +72,10 @@ export function cloudFactor(cloudCoverPct: number): FactorResult {
     id: "cloud",
     label: "Cloud cover",
     input: `${pct}% cover during dark hours`,
+    role: "sky",
     score,
-    weight: WEIGHTS.cloud,
-    points: round1(score * WEIGHTS.cloud),
+    weight: SKY_WEIGHTS.cloud,
+    points: round1(score * SKY_WEIGHTS.cloud),
     note,
   };
 }
@@ -91,9 +95,10 @@ export function darknessFactor(loc: Location, date: string): FactorResult {
     id: "darkness",
     label: "Dark hours",
     input: `${h} h with sun below -12°`,
+    role: "sky",
     score,
-    weight: WEIGHTS.darkness,
-    points: round1(score * WEIGHTS.darkness),
+    weight: SKY_WEIGHTS.darkness,
+    points: round1(score * SKY_WEIGHTS.darkness),
     note,
   };
 }
@@ -112,9 +117,10 @@ export function moonFactor(date: string): FactorResult {
     id: "moon",
     label: "Moon",
     input: `${pct}% illuminated`,
+    role: "sky",
     score,
-    weight: WEIGHTS.moon,
-    points: round1(score * WEIGHTS.moon),
+    weight: SKY_WEIGHTS.moon,
+    points: round1(score * SKY_WEIGHTS.moon),
     note,
   };
 }
@@ -131,20 +137,21 @@ export function scoreNight(loc: Location, f: NightForecast): NightScore {
     darknessFactor(loc, f.date),
     moonFactor(f.date),
   ];
-  const weightedSum = round1(breakdown.reduce((s, r) => s + r.score * r.weight, 0));
+  const skyFactors = breakdown.filter((r) => r.role === "sky");
+  const sky = round1(skyFactors.reduce((s, r) => s + r.score * r.weight, 0));
+  const reachResult = breakdown.find((r) => r.id === "reach")!;
+  const reach = round2(reachResult.score / 100);
+  const raw = round1(sky * reach);
 
   const caps: CapApplied[] = [];
   const cloud = breakdown.find((r) => r.id === "cloud")!;
-  const dark = breakdown.find((r) => r.id === "darkness")!;
-  const reach = breakdown.find((r) => r.id === "reach")!;
   if (100 - cloud.score >= CAPS.cloudPct) caps.push({ id: "cloud", cap: CAPS.cloudCap, reason: `Cloud cover ${100 - cloud.score}% is at or above ${CAPS.cloudPct}%.` });
   if (darkHours(loc.lat, f.date) < CAPS.darknessHours) caps.push({ id: "darkness", cap: CAPS.darknessCap, reason: `Under ${CAPS.darknessHours} h of real darkness.` });
-  if (reach.score <= CAPS.reachScore) caps.push({ id: "reach", cap: CAPS.reachCap, reason: "Forecast storm cannot reach this latitude." });
 
   const capValue = caps.length ? Math.min(...caps.map((c) => c.cap)) : Infinity;
-  const score = clamp(Math.round(Math.min(weightedSum, capValue)), 0, 100);
+  const score = clamp(Math.round(Math.min(raw, capValue)), 0, 100);
 
-  return { date: f.date, score, verdict: verdictFor(score, breakdown, caps, f.when), breakdown, weightedSum, caps };
+  return { date: f.date, score, verdict: verdictFor(score, breakdown, caps, f.when), breakdown, sky, reach, raw, caps };
 }
 
 /** Tonight plus the next nights, in the order given. v1 passes exactly three. */

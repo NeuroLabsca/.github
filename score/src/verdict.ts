@@ -22,7 +22,9 @@ const DRAG: Record<FactorResult["id"], string> = {
 
 /**
  * One line: band lead, then the single biggest thing holding the score back.
- * Caps win over drags because a cap is the whole story.
+ * Caps win because a cap is the whole story. Then the gate: if the storm is
+ * not reaching you, nothing about the sky matters. Then the sky factor that
+ * lost the most points.
  */
 export function verdictFor(score: number, breakdown: FactorResult[], caps: CapApplied[], when = "tonight"): string {
   const lead = bandFor(score).lead(when);
@@ -31,8 +33,12 @@ export function verdictFor(score: number, breakdown: FactorResult[], caps: CapAp
     return `${lead} ${DRAG[worst.id]}`;
   }
   if (score >= 80) return `${lead} Conditions line up.`;
-  // Biggest lost points = (100 - score) * weight.
-  const worst = breakdown.reduce((a, b) => ((100 - b.score) * b.weight > (100 - a.score) * a.weight ? b : a));
-  if ((100 - worst.score) * worst.weight < 5) return `${lead} Nothing is seriously in the way.`;
+  const gate = breakdown.find((r) => r.role === "gate");
+  if (gate && gate.score < 50) return `${lead} ${DRAG[gate.id]}`;
+  const sky = breakdown.filter((r) => r.role === "sky");
+  const worst = sky.reduce((a, b) => ((100 - b.score) * b.weight > (100 - a.score) * a.weight ? b : a));
+  const skyLoss = (100 - worst.score) * worst.weight;
+  if (gate && gate.score < 75 && skyLoss < 10) return `${lead} A modest storm: look for a glow low on the northern horizon.`;
+  if (skyLoss < 5) return `${lead} Nothing is seriously in the way.`;
   return `${lead} ${DRAG[worst.id]}`;
 }

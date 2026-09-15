@@ -120,6 +120,9 @@
   .label small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
   .bar { height: 8px; border-radius: 4px; background: var(--ring-track); overflow: hidden; margin-top: 6px; }
   .bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+  .bar.gate i { background: var(--pink); }
+  .group { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding-top: 4px; }
+  .subtotal { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
   .note { font-size: 14px; color: var(--muted); margin-top: 6px; }
   .math { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .math b { color: var(--text); font-weight: 500; display: block; font-size: 15px; }
@@ -179,7 +182,7 @@
   </section>
 
   <footer>
-    Kp forecast from NOAA SWPC, cloud cover from Open-Meteo, darkness and moon computed for your spot. Night window is 6 pm to 6 am local. Weights: storm reach 40%, cloud 30%, dark hours 15%, moon 15%. Overcast, no darkness, or a storm that can't reach you caps the score, and the cap is shown.
+    Kp forecast from NOAA SWPC, cloud cover from Open-Meteo, darkness and moon computed for your spot. Night window is 6 pm to 6 am local. Score = storm reach × sky. Storm reach is a gate from 0 to 1: can a storm this strong be seen from your latitude at all? Sky is cloud 60%, dark hours 20%, moon 20%. Overcast or no darkness caps the score, and the cap is shown.
   </footer>
 </div>
 
@@ -276,15 +279,20 @@
     els.panel.hidden = false;
     const whenLabel = selected === 0 ? "tonight" : selected === 1 ? "tomorrow night" : `${weekday(n.date)} night`;
     els.panelTitle.innerHTML = `Why ${n.score} ${whenLabel} <span>· ${shortDate(n.date)}</span>`;
-    els.breakdown.innerHTML = n.breakdown.map((r) => `
+    const gate = n.breakdown.find((r) => r.role === "gate");
+    const sky = n.breakdown.filter((r) => r.role === "sky");
+    const row = (r) => `
       <div class="row">
         <div class="label">${r.label}<small>${r.input}</small></div>
-        <div><div class="bar"><i style="width:${r.score}%"></i></div><div class="note">${r.note}</div></div>
-        <div class="math">${r.score} × ${r.weight.toFixed(2)}<b>${r.points.toFixed(1)} pts</b></div>
-      </div>`).join("");
+        <div><div class="bar${r.role === "gate" ? " gate" : ""}"><i style="width:${r.score}%"></i></div><div class="note">${r.note}</div></div>
+        <div class="math">${r.role === "gate" ? `gate<b>× ${(r.score / 100).toFixed(2)}</b>` : `${r.score} × ${r.weight.toFixed(2)}<b>${r.points.toFixed(1)} pts</b>`}</div>
+      </div>`;
+    els.breakdown.innerHTML = `
+      <div class="group">Is there aurora to see?</div>${row(gate)}
+      <div class="group">How good is the sky for it?</div>${sky.map(row).join("")}
+      <div class="subtotal"><div>Sky score</div><div class="math"><b>${n.sky.toFixed(1)}</b></div></div>`;
     els.caps.innerHTML = n.caps.map((c) => `<div class="cap"><b>Capped at ${c.cap}.</b> ${c.reason}</div>`).join("");
-    const capped = n.caps.length ? ` · capped at ${Math.min(...n.caps.map((c) => c.cap))}` : "";
-    els.total.innerHTML = `<div>Weighted sum${capped}</div><div class="math"><b>${n.weightedSum.toFixed(1)}${n.caps.length ? ` → ${n.score}` : ""}</b></div>`;
+    els.total.innerHTML = `<div>Sky ${n.sky.toFixed(1)} × storm reach ${n.reach.toFixed(2)}</div><div class="math"><b>${n.raw.toFixed(1)}${n.caps.length || Math.round(n.raw) !== n.score ? ` → ${n.score}` : ""}</b></div>`;
   }
 
   async function run() {

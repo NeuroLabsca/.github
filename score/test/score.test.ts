@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { scoreNight, scoreNights, WEIGHTS, CAPS } from "../src/index.ts";
+import { scoreNight, scoreNights, SKY_WEIGHTS, CAPS } from "../src/index.ts";
 import { kpForOverhead } from "../src/score.ts";
 import { darkHours, magneticLatitude, moonIllumination } from "../src/astro.ts";
 
@@ -8,15 +8,19 @@ const PEI = { lat: 46.24, lon: -63.13 };
 const TROMSO = { lat: 69.65, lon: 18.96 };
 const MIAMI = { lat: 25.76, lon: -80.19 };
 
-test("weights sum to 1", () => {
-  const sum = Object.values(WEIGHTS).reduce((a, b) => a + b, 0);
+test("sky weights sum to 1", () => {
+  const sum = Object.values(SKY_WEIGHTS).reduce((a, b) => a + b, 0);
   assert.ok(Math.abs(sum - 1) < 1e-9);
 });
 
-test("breakdown points sum to the weighted sum", () => {
+test("breakdown recomputes by hand: sky points sum, times reach, equals raw", () => {
   const n = scoreNight(PEI, { date: "2026-09-14", kp: 5, cloudCoverPct: 40 });
-  const sum = n.breakdown.reduce((s, r) => s + r.points, 0);
-  assert.ok(Math.abs(sum - n.weightedSum) < 0.2, `${sum} vs ${n.weightedSum}`);
+  const skyPoints = n.breakdown.filter((r) => r.role === "sky").reduce((s, r) => s + r.points, 0);
+  assert.ok(Math.abs(skyPoints - n.sky) < 0.2, `${skyPoints} vs ${n.sky}`);
+  const gate = n.breakdown.find((r) => r.role === "gate")!;
+  assert.equal(gate.score / 100, n.reach);
+  assert.ok(Math.abs(n.sky * n.reach - n.raw) < 0.1);
+  assert.equal(n.score, Math.round(n.raw));
   assert.equal(n.breakdown.length, 4);
   for (const r of n.breakdown) {
     assert.ok(r.score >= 0 && r.score <= 100);
@@ -38,18 +42,33 @@ test("strong storm, clear, dark, no moon scores high in PEI", () => {
   assert.match(n.verdict, /^Go out tonight\./);
 });
 
+test("perfect sky with no storm scores near zero (the screenshot case)", () => {
+  const n = scoreNight(PEI, { date: "2026-09-14", kp: 2.67, cloudCoverPct: 14 });
+  assert.ok(n.score < 10, `${n.score}`);
+  assert.match(n.verdict, /^Not tonight\. The storm is too weak/);
+});
+
 test("overcast caps the score and says so", () => {
   const n = scoreNight(PEI, { date: "2026-09-11", kp: 8, cloudCoverPct: 95 });
   assert.equal(n.score, CAPS.cloudCap);
-  assert.ok(n.weightedSum > n.score, "cap must have overridden the sum");
+  assert.ok(n.raw > n.score, "cap must have overridden the raw score");
   assert.ok(n.caps.some((c) => c.id === "cloud"));
   assert.match(n.verdict, /Cloud is the problem/);
 });
 
-test("weak storm cannot reach PEI, capped", () => {
+test("weak storm cannot reach PEI, gate closes", () => {
   const n = scoreNight(PEI, { date: "2026-09-11", kp: 1, cloudCoverPct: 0 });
-  assert.equal(n.score, CAPS.reachCap);
+  assert.equal(n.score, 0);
+  assert.equal(n.reach, 0);
   assert.match(n.verdict, /too weak/);
+});
+
+test("PEI ladder: Kp 3 nothing, Kp 4 maybe, Kp 5 good, Kp 6 go", () => {
+  const at = (kp: number) => scoreNight(PEI, { date: "2026-09-11", kp, cloudCoverPct: 10 }).score;
+  assert.ok(at(3) < 20, `kp3 ${at(3)}`);
+  assert.ok(at(4) >= 40 && at(4) < 70, `kp4 ${at(4)}`);
+  assert.ok(at(5) >= 60, `kp5 ${at(5)}`);
+  assert.ok(at(6) >= 80, `kp6 ${at(6)}`);
 });
 
 test("weak storm still fine in Tromso", () => {
@@ -93,7 +112,7 @@ test("higher Kp never lowers the score", () => {
 test("scoreNights returns one result per night in order", () => {
   const out = scoreNights(PEI, [
     { date: "2026-09-14", kp: 5, cloudCoverPct: 10 },
-    { date: "2026-09-15", kp: 3, cloudCoverPct: 10 },
+    { date: "2026-09-15", kp: 4, cloudCoverPct: 10 },
     { date: "2026-09-16", kp: 1, cloudCoverPct: 10 },
   ]);
   assert.deepEqual(out.map((n) => n.date), ["2026-09-14", "2026-09-15", "2026-09-16"]);
@@ -103,6 +122,12 @@ test("scoreNights returns one result per night in order", () => {
 test("verdict names the night it is about", () => {
   const n = scoreNight(PEI, { date: "2026-09-11", kp: 7, cloudCoverPct: 5, when: "tomorrow night" });
   assert.match(n.verdict, /^Go out tomorrow night\./);
+});
+
+test("a horizon-only storm under a clear sky says so, not 'too weak'", () => {
+  const n = scoreNight(PEI, { date: "2026-09-11", kp: 4, cloudCoverPct: 10 });
+  assert.match(n.verdict, /horizon/);
+  assert.doesNotMatch(n.verdict, /too weak/);
 });
 
 test("rejects bad input", () => {
