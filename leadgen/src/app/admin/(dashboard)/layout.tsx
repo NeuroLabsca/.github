@@ -8,13 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const jar = await cookies();
   const ok = (() => { try { return verifySession(jar.get(sessionCookieName())?.value); } catch { return false; } })();
-  // The login page shares this layout tree in Next; let it through unauthenticated.
-  if (!ok) {
-    const h = await import("next/headers").then((m) => m.headers());
-    const path = h.get("x-invoke-path") ?? h.get("next-url") ?? "";
-    if (!path.includes("/admin/login")) redirect("/admin/login");
-    return <>{children}</>;
-  }
+  if (!ok) redirect("/admin/login");
   return (
     <div className="min-h-screen bg-ground">
       <header className="border-b border-line bg-white">
